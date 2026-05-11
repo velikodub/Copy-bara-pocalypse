@@ -5,10 +5,8 @@ using UnityEngine;
 public class GameManager : MonoBehaviour
 {
     public static GameManager Instance { get; private set; }
+    public bool isGameOver {get; private set;}
 
-    public int coins{get; private set;}
-
-    private int clickIncome = 1;
     private void Awake()
     {
         if(Instance == null)
@@ -20,8 +18,13 @@ public class GameManager : MonoBehaviour
             Destroy(gameObject);
         }
     }
-    public void AddCoins()
+    private void Start()
     {
-        coins += clickIncome;
+        isGameOver = false;
+    }
+    public void GameOver()
+    {
+        isGameOver = true;
+        Debug.Log("Мандарины закончились! Конец забега.");
     }
 }

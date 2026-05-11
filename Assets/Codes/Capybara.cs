@@ -1,4 +1,4 @@
-using Unity.VisualScripting;
+using System.Collections;
 using UnityEngine;
 
 public class Capybara : MonoBehaviour
@@ -8,12 +8,12 @@ public class Capybara : MonoBehaviour
     [SerializeField]private float padding = 0.5f;
     [SerializeField]private Camera mainCamera;
     [Header("Breeding")]
-    [SerializeField] private float collisionDistnace = 1f;
     [SerializeField] private float breedingCooldown = 5f;
 
     private float minX, maxX, minY, maxY;
     private Vector2 targetPosition;
-    private float currentCooldown = 0f;
+    private bool isOnCooldown = false;
+    private bool hasCustomTarget = false;
 
     private void Start()
     {
@@ -22,7 +22,11 @@ public class Capybara : MonoBehaviour
             mainCamera = Camera.main;
         }
         CalculateBounds();
-        SetNewRandomTarget();
+
+        if (!hasCustomTarget)
+        {
+            SetNewRandomTarget();
+        }
 
         Spawner.Instance.capybaraCount++;
     }
@@ -35,11 +39,16 @@ public class Capybara : MonoBehaviour
     }
     private void Update()
     {
-        if(currentCooldown > 0)
-        {
-            currentCooldown -= Time.deltaTime;
-        }
         MoveTowardsTarget();
+    }
+    IEnumerator CooldownRoutine()
+    {
+        isOnCooldown = true;
+        
+        // Просто ждем нужное количество секунд
+        yield return new WaitForSeconds(breedingCooldown);
+        
+        isOnCooldown = false;
     }
     private void OnTriggerEnter2D(Collider2D collision)
     {
@@ -47,22 +56,27 @@ public class Capybara : MonoBehaviour
 
         if (other != null)
         {
-            if(this.currentCooldown >0 || other.currentCooldown > 0)
+            if(this.isOnCooldown || other.isOnCooldown)
             {
                 return;
             }
 
-            this.currentCooldown = breedingCooldown;
-            other.currentCooldown = breedingCooldown;
+            this.StartCoroutine(this.CooldownRoutine());
+            other.StartCoroutine(other.CooldownRoutine());
 
             Spawner.Instance.SpawnCapybara(transform.position);
         }
+    }
+    public void SetCustomTarget(Vector2 target)
+    {
+        targetPosition = target;
+        hasCustomTarget = true;
     }
     private void OnMouseDown()
     {
         if(Spawner.Instance.capybaraCount > 2)
         {
-            GameManager.Instance.AddCoins();
+            ResoursesManager.Instance.AddCoins();
             Destroy(gameObject);
         }
     }
